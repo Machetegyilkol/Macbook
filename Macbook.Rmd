@@ -1,0 +1,506 @@
+---
+title: "Marketing_B"
+author: "David A."
+date: "2024-06-17"
+output:
+  word_document: default
+  html_document: 
+    theme: cosmo
+---
+
+First, we used Excel for minor data manipulation tasks, such as removing unnecessary columns like IP addresses or the date of survey completion. Subsequently, we employed R to conduct data analysis on our survey data. Our objectives included identifying aspects that distinguish Apple users from non-Apple users and investigating potential correlations between individuals' priorities in choosing a laptop and their perceptions of the MacBook brand.
+
+Before delving into our analysis, it is prudent to explore our dataset. We collected a total of 89 responses, but we excluded the first five responses due to them being test entries. Our target demographic comprises individuals who own one or multiple laptops. Therefore, we will visualize the distribution within our sample, categorizing respondents as those who own a single laptop, multiple laptops, or none at all.
+
+ 
+
+```{r include=FALSE}
+library(tidyverse)
+library(readxl)
+library(knitr)
+library(reshape2)
+```
+
+
+```{r include=FALSE}
+# Load the data
+Macbook <- read_excel("Macbook.xlsx")
+```
+
+```{r include=FALSE}
+#delete the first six rows
+Macbook <- Macbook[-c(1:6),]
+```
+
+```{r echo=FALSE}
+#Creating a barchart about the number of laptops the respondents have
+Macbook %>%
+  mutate(Q9 = ifelse(Q9 == "1", "NO",
+                     ifelse(Q9 == "2", "YES", "Multiple"))) %>% 
+  ggplot(aes(x="",y = Q9, fill= Q9)) +
+  geom_bar(stat="identity", width=1) +
+  coord_polar("y", start=0) +
+  labs(title = "Do you have a or multiple laptop(s)?",
+       fill = "Response",
+    ) +
+  theme_void()
+```
+
+Upon reviewing the pie chart, it is evident that a majority of respondents own at least one laptop, with approximately equal numbers owning multiple laptops or none at all. However, we received feedback indicating that some respondents found the question ambiguous. Specifically, there was confusion regarding whether respondents who do not own a laptop should indicate "multiple laptops" or "none." This ambiguity may introduce bias into our data. Additionally, our survey design included a branching pattern where respondents who do not own a laptop would terminate their survey after this question, potentially leading to the loss of valuable responses. 
+
+After analyzing the distribution of laptop ownership in our sample, due to the branch pattern, we excluded respondents who do not own a laptop. Following this adjustment, our sample size reduced to 74 observations.
+
+Next, let's examine the distribution of laptop brands within our refined sample. Respondents were provided with 10 brand options to choose from, along with an "Other" option. The results of this selection are presented in the bar chart below. This analysis will provide insights into the preferences and trends regarding laptop brands among our respondents.
+
+```{r include=FALSE}
+Macbook <- Macbook %>% filter(Q9 != "1")
+```
+
+```{r echo=FALSE}
+Macbook %>%
+  mutate(as.numeric(Q10),
+    Brand = case_when(
+    Q10 == 1 ~ "Apple",
+    Q10 == 2 ~ "Samsung",
+    Q10 == 3 ~ "Lenovo",
+    Q10 == 4 ~ "Acer",
+    Q10 == 5 ~ "Asus",
+    Q10 == 6 ~ "Huawei",
+    Q10 == 7 ~ "Dell",
+    Q10 == 8 ~ "HP",
+    Q10 == 9 ~ "MSI",
+    Q10 == 10 ~ "Microsoft",
+    TRUE ~ "Other"
+  )) %>% 
+  ggplot(aes(x = Brand, fill = Brand)) +
+  geom_bar() +
+  labs(title = "What is your laptop's brand?",
+       x = "Brand",
+       y = "Count"
+  ) +
+  theme_minimal() +
+  theme(axis.text.x = element_text(angle = 45, vjust = 1))
+  
+```
+
+The bar chart illustrates that MacBook is the most favored laptop brand among our respondents, with 25 users selecting it. Lenovo follows in second place with 11 respondents, which is less than half of MacBook's count. HP ranks third with 9 respondents indicating its use. Other brands received minimal responses; notably, MSI and HUAWEI received zero responses.
+
+Next, let's delve into the demographics and characteristics of our respondents, including their gender and personality types.
+
+```{r echo=FALSE}
+gender <- Macbook %>%   mutate(as.numeric(Q2),
+    Q2 = case_when(
+    Q2 == 1 ~ "Male",
+    Q2 == 2 ~ "Female",
+    Q2 == 3 ~ "Non-binary")) %>% 
+  group_by(Q2) %>% 
+  count(Q2)
+kable(gender, format = "markdown", caption = "Distribution of genders", col.names = c())
+```
+
+```{r echo=FALSE}
+Country <-  Macbook %>%   mutate(as.numeric(Q3),
+    Q3 = case_when(
+    Q3 == 1 ~ "Netherlands",
+    Q3 == 2 ~ "Europe",
+    Q3 == 3 ~ "Outside_Europe")) %>% 
+  group_by(Q3) %>% 
+  count(Q3)
+kable(Country, format = "markdown", caption = "Distribution of countries", col.names = c())
+  
+```
+
+```{r echo=FALSE}
+Personality <-  Macbook %>%   mutate(as.numeric(Q4),
+    Q4 = case_when(
+    Q4 == 1 ~ "Introvert",
+    Q4 == 2 ~ "Extrovert",
+    Q4 == 3 ~ "Ambivert")) %>% 
+  group_by(Q4) %>% 
+  count(Q4)
+kable(Personality, format = "markdown", caption = "Distribution of personalities", col.names = c())
+  
+```
+
+```{r echo=FALSE}
+Student <-  Macbook %>%   mutate(as.numeric(Q5),
+    Q5 = case_when(
+    Q5 == 1 ~ "Yes",
+    Q5 == 2 ~ "No")) %>% 
+  group_by(Q5) %>% 
+  count(Q5)
+kable(Student, format = "markdown", caption = "Distribution of students", col.names = c())
+
+  
+```
+
+```{r echo=FALSE}
+
+Study_level <-  Macbook %>%   mutate(as.numeric(Q6),
+    Q6 = case_when(
+    Q6 == 1 ~ "High scool",
+    Q6 == 2 ~ "Bsc",
+    Q6 == 3 ~ "Msc",
+    Q6 == 4 ~ "Phd")) %>% 
+  group_by(Q6) %>% 
+  count(Q6)
+kable(Study_level, format = "markdown", caption = "Distribution of study levels", col.names = c())
+  
+  
+```
+
+Regarding the gender distribution, we can see that the 54% of the respondents are male. 38% are female and the remaining 8% are non-binary. We divided the place of origin like the netherlands, not netherlands but in europe and outside europe. 45 of the 74 people responded that they are from Europe, 22 people are from the Netherlands and 7 people are from outside Europe. We asked them about what personality type they consider themself to be. Exactly the half of our respondent consider themself as an extrover, 43% introvert 5.5% ambivert and 1 person answered with don't know. The low rate of ambivert can be explained by the fact that it is a less known personality type and people tend to categorized themself as introvert or extrovert. 56 of the 74 respondents are students and the rest are not. The majority of the students are studing on bachelor level, 64% percent of them. 34% are studying on master level and only 2%, 1 person, are studying on phd level.
+
+In this section, we develop a model to determine if there is a correlation between the factors that individuals consider important when choosing a laptop and their sentiments towards the MacBook brand. We employ a logistic regression model for this analysis.
+
+The dependent variable in our model is an affinity score, calculated by summing the responses to the last five questions, which are statements about the MacBook. Respondents could answer with "agree," "tend to agree," "tend to disagree," and "disagree." Each response is scored as follows: agreeing with a positive statement about the MacBook earns 2 points, tending to agree earns 1 point, tending to disagree earns -1 point, and disagreeing earns -2 points. This score is then used to create a binary variable, which serves as our dependent variable. If the affinity score is positive, the respondent is classified as having a positive affinity towards the MacBook; if negative, they are classified as having a negative affinity.
+
+The independent variables in our model are the responses to questions regarding the importance of various factors when choosing a laptop. These factors include: price, performance, reliability, design, value for money, running cost, durability, residual value, sustainability, operating system, display, battery life, weight/portability, storage, material usage, CPU, GPU, RAM, and whether the respondent is a current MacBook user.
+
+Given the large number of independent variables, we used backward elimination to identify the most significant ones. Backward elimination utilizes the Akaike Information Criterion (AIC) to iteratively remove variables from the model, selecting the model that minimizes the AIC at each step.
+
+After determining the final model, we checked for multicollinearity using the Variance Inflation Factor (VIF) scores to ensure the robustness of our results.
+
+Our final model is presented below:
+
+```{r include=FALSE}
+Macbook_log <- Macbook %>% 
+  mutate(across(c(Q19,Q20,Q21,Q22,Q23), as.numeric),
+         Q19 = ifelse(Q19<3,Q19-3,Q19-2),
+         Q20 = ifelse(Q20<3,-1*Q20+3,-1*Q20+2),
+         Q21 = ifelse(Q21<3,-1*Q21+3,-1*Q21+2),
+         Q22 = ifelse(Q22<3,Q22-3,Q22-2),
+         Q23 = ifelse(Q23<3,-1*Q23+3,-1*Q23+2)
+         )
+```
+
+```{r include=FALSE}
+Macbook_log <- Macbook_log %>% 
+  mutate(affinity = Q19 + Q20 + Q21 + Q22 + Q23,
+         pos_neg = ifelse(affinity > 0, "Positive", "Negative")
+         )
+```
+
+```{r include=FALSE}
+Macbook_log <- Macbook_log %>% 
+  mutate(across(c(Q14_1, Q14_2, Q14_3, Q14_4, Q14_5, Q14_6, Q14_7, Q14_8, Q14_9,
+                  Q15_1, Q15_2, Q15_3, Q15_4, Q15_5, Q15_6, Q15_7, Q15_8, Q15_9), as.numeric),
+         apple = ifelse(Q10 == 1, 1,0),
+         positive = ifelse(pos_neg == "Positive", 1,0)
+         )
+```
+
+
+```{r include=FALSE}
+# Fit the initial model with all predictors
+log_model <- glm(positive ~  Q14_1+ Q14_2+ Q14_3+ Q14_4+ Q14_5+ Q14_6+ Q14_7+ Q14_8+ Q14_9+
+                  Q15_1+ Q15_2+ Q15_3+ Q15_4+ Q15_5+ Q15_6+ Q15_7+ Q15_8+ Q15_9 + apple, data = Macbook_log, family = binomial)
+
+# Perform backward elimination
+backward_model <- step(log_model, direction = "backward")
+
+```
+
+```{r echo=FALSE}
+summary(backward_model)
+```
+
+
+We observe that our model consists of the following variables: the intercept, Q14_5 (a question about the importance of design), Q15_2 (importance of display), Q15_6 (importance of material usage), Q15_8 (importance of GPU), and the "apple" variable, which indicates whether the respondent is a MacBook user.
+
+The p-values for the "apple" variable and Q15_6 are significant at the 0.01 level. This indicates that being a MacBook user has a strong positive effect on a person's affinity towards the MacBook brand. Specifically, current MacBook users are significantly more likely to have a positive affinity towards the brand. On the other hand, finding material usage important has a significant negative effect on the person's affinity towards the MacBook brand. This may suggest that individuals who prioritize material usage might have concerns about the materials used in MacBooks or may prefer materials used by other brands.
+
+Additionally, the intercept is significant at the 5% level, implying that there are other underlying factors influencing the affinity score that are not captured by our model. The significance of Q15_8 at the 10% level indicates that placing importance on the GPU has a negative effect on a person's affinity towards the MacBook brand. This could be due to the perception that MacBooks may not offer the best GPU performance compared to other laptops designed specifically for high-end graphical performance which makes unattractive choice among gamers.
+
+
+```{r include=FALSE}
+#vif
+library(car)
+vif(backward_model)
+```
+
+We also examined the association between the respondents' personality types and their likelihood of being MacBook users. The p-value obtained from our analysis was less than 0.05, suggesting that there is sufficient evidence to reject the null hypothesis. This indicates a statistically significant association between being a MacBook user and the respondent's personality type.
+
+```{r}
+# Assosiation
+chisq.test(table(Macbook_log$pos_neg, Macbook_log$Q4))
+```
+
+
+Finally, let's compare our sample's MacBook users with users of other laptop brands based on the following questions: how they gather information about the laptop they plan to buy, what factors influenced their choice of brand, what they use their laptop for, their perceived strengths and weaknesses of the MacBook, and the factors that influence their decision when buying a laptop. These questions were all multiple-choice, and we analyzed which answers were most frequently chosen by each group.
+
+When gathering information about the laptop they plan to buy, most MacBook users reported relying on recommendations from friends. In contrast, non-MacBook users tended to watch tests or reviews online. Both groups indicated that the most influential factor in choosing their laptop brand was having a good experience with that brand in the past.
+
+Regarding the primary use of their laptops, MacBook users most commonly chose entertainment, whereas non-MacBook users most frequently mentioned browsing the internet.
+
+MacBook users identified the main strengths of the MacBook as its design and brand, with the primary weaknesses being its price and residual cost. Similarly, non-MacBook users acknowledged the MacBook's design and brand as its main strengths but listed the price and running cost as the main weaknesses.
+
+```{r include=FALSE}
+users <- Macbook_log %>% 
+  filter(apple == 1)
+```
+
+```{r include=FALSE}
+users %>% 
+  group_by(Q16) %>% 
+  count(Q16)
+#recommedation from friends
+```
+```{r include=FALSE}
+#entertainment
+sum(grepl("3", users$Q12))
+sum(grepl("1", users$Q12))
+sum(grepl("2", users$Q12))
+sum(grepl("4", users$Q12))
+sum(grepl("5", users$Q12))
+sum(grepl("6", users$Q12))
+sum(grepl("7", users$Q12))
+```
+
+```{r include=FALSE}
+#I had a good experience with this brand
+sum(grepl("3", users$Q13))
+sum(grepl("1", users$Q13))
+sum(grepl("2", users$Q13))
+sum(grepl("4", users$Q13))
+sum(grepl("5", users$Q13))
+sum(grepl("6", users$Q13))
+sum(grepl("7", users$Q13))
+
+```
+
+```{r include=FALSE}
+#whatched test/review online
+sum(grepl("3", users$Q16))
+sum(grepl("1", users$Q16))
+sum(grepl("2", users$Q16))
+sum(grepl("4", users$Q16))
+sum(grepl("5", users$Q16))
+sum(grepl("6", users$Q16))
+sum(grepl("7", users$Q16))
+```
+
+```{r include=FALSE}
+#design, brand
+sum(grepl("3", users$Q17))
+sum(grepl("1", users$Q17))
+sum(grepl("2", users$Q17))
+sum(grepl("4", users$Q17))
+sum(grepl("5", users$Q17))
+sum(grepl("6", users$Q17))
+sum(grepl("7", users$Q17))
+sum(grepl("8", users$Q17))
+sum(grepl("9", users$Q17))
+```
+
+```{r include=FALSE}
+#Price, residual value
+sum(grepl("3", users$Q18))
+sum(grepl("1", users$Q18))
+sum(grepl("2", users$Q18))
+sum(grepl("4", users$Q18))
+sum(grepl("5", users$Q18))
+sum(grepl("6", users$Q18))
+sum(grepl("7", users$Q18))
+sum(grepl("8", users$Q18))
+sum(grepl("9", users$Q18))
+```
+
+
+
+```{r include=FALSE}
+non_users <- Macbook_log %>% 
+  filter(apple == 0)
+```
+
+
+
+```{r include=FALSE}
+#browaing the internet
+sum(grepl("3", non_users$Q12))
+sum(grepl("1", non_users$Q12))
+sum(grepl("2", non_users$Q12))
+sum(grepl("4", non_users$Q12))
+sum(grepl("5", non_users$Q12))
+sum(grepl("6", non_users$Q12))
+sum(grepl("7", non_users$Q12))
+```
+
+```{r include=FALSE}
+#I had a good experience with this brand
+sum(grepl("3", non_users$Q13))
+sum(grepl("1", non_users$Q13))
+sum(grepl("2", non_users$Q13))
+sum(grepl("4", non_users$Q13))
+sum(grepl("5", non_users$Q13))
+sum(grepl("6", non_users$Q13))
+sum(grepl("7", non_users$Q13))
+
+```
+
+```{r include=FALSE}
+#whatched test/review online
+sum(grepl("3", non_users$Q16))
+sum(grepl("1", non_users$Q16))
+sum(grepl("2", non_users$Q16))
+sum(grepl("4", non_users$Q16))
+sum(grepl("5", non_users$Q16))
+sum(grepl("6", non_users$Q16))
+sum(grepl("7", non_users$Q16))
+```
+
+```{r include=FALSE}
+#design, brand
+sum(grepl("3", non_users$Q17))
+sum(grepl("1", non_users$Q17))
+sum(grepl("2", non_users$Q17))
+sum(grepl("4", non_users$Q17))
+sum(grepl("5", non_users$Q17))
+sum(grepl("6", non_users$Q17))
+sum(grepl("7", non_users$Q17))
+sum(grepl("8", non_users$Q17))
+sum(grepl("9", non_users$Q17))
+```
+
+```{r include=FALSE}
+#Price, running cost
+sum(grepl("3", non_users$Q18))
+sum(grepl("1", non_users$Q18))
+sum(grepl("2", non_users$Q18))
+sum(grepl("4", non_users$Q18))
+sum(grepl("5", non_users$Q18))
+sum(grepl("6", non_users$Q18))
+sum(grepl("7", non_users$Q18))
+sum(grepl("8", non_users$Q18))
+sum(grepl("9", non_users$Q18))
+```
+
+
+```{r}
+users <- users %>%
+  mutate(across(c(Q14_1, Q14_2, Q14_3, Q14_4, Q14_5, Q14_6, Q14_7, Q14_8, Q14_9,
+                  Q15_1, Q15_2, Q15_3, Q15_4, Q15_5, Q15_6, Q15_7, Q15_8, Q15_9), as.numeric))
+users %>% 
+  summarise(across(c(Q14_1, Q14_2, Q14_3, Q14_4, Q14_5, Q14_6, Q14_7, Q14_8, Q14_9,
+                  Q15_1, Q15_2, Q15_3, Q15_4, Q15_5, Q15_6, Q15_7, Q15_8, Q15_9), c(mean), na.rm = TRUE)) %>% 
+  gather(key, value) %>%
+  ggplot(aes(x = key, y = value)) +
+  geom_bar(stat = "identity") +
+  theme_minimal() +
+  labs(title = "Macbook users Mean Values",
+       x = "Questions", y = "Mean") +
+  theme(axis.text.x = element_text(angle = 45, vjust = 1))
+
+```
+
+
+```{r}
+non_users <- non_users %>%
+  mutate(across(c(Q14_1, Q14_2, Q14_3, Q14_4, Q14_5, Q14_6, Q14_7, Q14_8, Q14_9,
+                  Q15_1, Q15_2, Q15_3, Q15_4, Q15_5, Q15_6, Q15_7, Q15_8, Q15_9), as.numeric))
+non_users %>% 
+  summarise(across(c(Q14_1, Q14_2, Q14_3, Q14_4, Q14_5, Q14_6, Q14_7, Q14_8, Q14_9,
+                  Q15_1, Q15_2, Q15_3, Q15_4, Q15_5, Q15_6, Q15_7, Q15_8, Q15_9), c(mean), na.rm = TRUE)) %>% 
+  gather(key, value) %>%
+  ggplot(aes(x = key, y = value)) +
+  geom_bar(stat = "identity") +
+  theme_minimal() +
+  labs(title = "non-MacBook users Mean Values",
+       x = "Questions", y = "Mean") +
+  theme(axis.text.x = element_text(angle = 45, vjust = 1))
+
+```
+
+```{r}
+gg_df <- data.frame(users %>% 
+  summarise(across(c(Q14_1, Q14_2, Q14_3, Q14_4, Q14_5, Q14_6, Q14_7, Q14_8, Q14_9), c(mean), na.rm = TRUE)))
+gg_df$group <- "Macbook_users"
+gg_df_2 <-   data.frame(non_users %>% 
+  summarise(across(c(Q14_1, Q14_2, Q14_3, Q14_4, Q14_5, Q14_6, Q14_7, Q14_8, Q14_9), c(mean), na.rm = TRUE)))
+gg_df_2$group <- "non_Macbook_users"
+
+gg_df_3 <- rbind(gg_df, gg_df_2)
+
+gg_df_melt <- melt(gg_df_3, id.vars = "group", variable.name = "Question", value.name = "Mean")
+```
+
+```{r}
+ggplot(gg_df_melt, aes(x = Question, y = Mean, fill = group)) +
+  geom_bar(stat = "identity", position = position_dodge()) +
+  labs(title = "Mean Values of Questions for Users and Non-users from Q14_1 to Q14_9", x = "Question", y = "Mean Value") +
+  theme_minimal() +
+  scale_fill_manual(values = c("Macbook_users" = "grey", "non_Macbook_users" = "orange")) +
+  theme(
+    plot.title = element_text(size = 20, face = "bold"),
+    axis.title.x = element_text(size = 16),
+    axis.title.y = element_text(size = 16),
+    axis.text.x = element_text(size = 14, angle = 45, hjust = 1),
+    axis.text.y = element_text(size = 14),
+    legend.title = element_text(size = 14),
+    legend.text = element_text(size = 12)
+  )
+```
+
+```{r}
+gg_df <- data.frame(users %>% 
+  summarise(across(c(Q15_1, Q15_2, Q15_3, Q15_4, Q15_5, Q15_6, Q15_7, Q15_8, Q15_9), c(mean), na.rm = TRUE)))
+gg_df$group <- "Macbook_users"
+gg_df_2 <-   data.frame(non_users %>% 
+  summarise(across(c(Q15_1, Q15_2, Q15_3, Q15_4, Q15_5, Q15_6, Q15_7, Q15_8, Q15_9), c(mean), na.rm = TRUE)))
+gg_df_2$group <- "non_Macbook_users"
+
+gg_df_3 <- rbind(gg_df, gg_df_2)
+
+gg_df_melt <- melt(gg_df_3, id.vars = "group", variable.name = "Question", value.name = "Mean")
+```
+
+```{r}
+ggplot(gg_df_melt, aes(x = Question, y = Mean, fill = group)) +
+  geom_bar(stat = "identity", position = position_dodge()) +
+  labs(title = "Mean Values of Questions for Users and Non-users from Q15_1 to Q15_9", x = "Question", y = "Mean Value") +
+  theme_minimal() +
+  scale_fill_manual(values = c("Macbook_users" = "grey", "non_Macbook_users" = "orange")) +
+  theme(
+    plot.title = element_text(size = 20, face = "bold"),
+    axis.title.x = element_text(size = 16),
+    axis.title.y = element_text(size = 16),
+    axis.text.x = element_text(size = 14, angle = 45, hjust = 1),
+    axis.text.y = element_text(size = 14),
+    legend.title = element_text(size = 14),
+    legend.text = element_text(size = 12)
+  )
+```
+
+```{r}
+mean_users <- users %>% 
+  summarise(across(c(Q14_1, Q14_2, Q14_3, Q14_4, Q14_5, Q14_6, Q14_7, Q14_8, Q14_9,
+                  Q15_1, Q15_2, Q15_3, Q15_4, Q15_5, Q15_6, Q15_7, Q15_8, Q15_9), c(mean), na.rm = TRUE)) 
+
+mean_nonusers <- non_users %>% 
+  summarise(across(c(Q14_1, Q14_2, Q14_3, Q14_4, Q14_5, Q14_6, Q14_7, Q14_8, Q14_9,
+                  Q15_1, Q15_2, Q15_3, Q15_4, Q15_5, Q15_6, Q15_7, Q15_8, Q15_9), c(mean), na.rm = TRUE))
+
+mean_users-mean_nonusers
+```
+
+Lets see which are thoese aspects where are the biggest difference between the two groups in the case of importance. First let's visualize the means for Macbook users and non-Macbook users. After compering the two graphs we could conclude there are three aspect where the difference is the biggest. The first one is the importance of the price and the other two are design and operation system. Now lets perform t-tests to determine if the means are statistically different from each other.
+
+```{r}
+t.test(users$Q14_1, non_users$Q14_1)
+```
+```{r}
+t.test(users$Q14_5, non_users$Q14_5)
+```
+
+```{r}
+t.test(users$Q15_1, non_users$Q15_1)
+```
+  
+The results of the t-tests indicate that the means for the importance of price(p value: 0.007631) and operating system(0.04084) are statistically different between MacBook users and non-MacBook users at 5% significance level. The mean for the importance of design(p-value = 0.07432) is also statistically different at 10% significance level. 
+
+
+
+
+
+
+
